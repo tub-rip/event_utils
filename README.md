@@ -1,3 +1,49 @@
+# RIP lab note
+
+This repository is a fork of [https://github.com/TimoStoff/event_utils](https://github.com/TimoStoff/event_utils). The original README is below this section.
+
+Upon the original implementation, some bugs are fixed and modified for more convenient visualization. When the original repo is updated, it would be better to keep this repo updated too.
+
+## Note for installation
+
+- For installation: see [installation script](install.sh).
+
+Worked environment is `python 3.9`, and some other libraries are (maybe not so strict though):
+
+```
+h5py==3.5.0
+matplotlib==3.4.3
+mayavi==4.7.3   (optional - matplotlib might be easier)
+numpy==1.21.3
+opencv-python==4.5.4.58
+pandas==1.3.4
+Pillow==8.4.0
+PyQt5==5.15.6   (optional - if you want to use mayavi)
+scikit-image==0.18.3
+scipy==1.7.1
+six==1.16.0
+torch==1.10.0
+torchaudio==0.10.0
+torchvision==0.11.1
+tqdm==4.62.3
+```
+
+## Note for execution
+
+- For execution: this is an example of visualizing both event-image and frame-image event stream.
+
+```
+python3 visualize_events.py  ~/work/tub/timo_data/corridor_s19_d1.bag.h5 --output_path ~/work/tub/timo_data/outputs
+```
+
+Success execution has been checked for `visualize_events.py`, `visualize_voxel.py`, `visualize.py`.
+
+I'm not using mayavi, but using matplotlib.
+
+
+End of README in RIP lab. The below is original README.
+
+------
 # event_utils
 Event based vision utility library. For additional detail, see the thesis document [Motion Estimation by Focus Optimisation: Optic Flow and Motion Segmentation with Event Cameras](https://timostoff.github.io/thesis). If you use this code in an academic context, please cite:
 ```

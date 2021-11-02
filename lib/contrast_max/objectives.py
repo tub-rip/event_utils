@@ -8,9 +8,9 @@ from ..util.util import plot_image
 import cv2 as cv
 
 class objective_function(ABC):
-"""
-Parent class for all objective functions for contrast maximisation
-"""
+    """
+    Parent class for all objective functions for contrast maximisation
+    """
     def __init__(self, name="template", use_polarity=True,
             has_derivative=True, default_blur=1.0, adaptive_lifespan=False,
             pixel_crossings=5, minimum_events=10000):
