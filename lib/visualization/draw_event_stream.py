@@ -191,6 +191,7 @@ def plot_events(xs, ys, ts, ps, save_path=None, num_compress='auto', num_show=10
     if img_size is None:
         img_size = [max(ys), max(xs)] if len(imgs)==0 else imgs[0].shape[0:2]
         print("Inferred image size = {}".format(img_size))
+    
     crop = [0, img_size[0], 0, img_size[1]] if crop is None else crop
     xs, ys, ts, ps = clip_events_to_bounds(xs, ys, ts, ps, crop, set_zero=False)
     xs, ys = xs-crop[2], ys-crop[0]
@@ -207,30 +208,64 @@ def plot_events(xs, ys, ts, ps, save_path=None, num_compress='auto', num_show=10
     ax = fig.add_subplot(111, projection='3d', proj_type = 'ortho')
     colors = ['r' if p>0 else ('#00DAFF' if invert else 'b') for p in ps]
 
+
     #Plot images
-    if len(imgs)>0 and show_frames:
-        for imgidx, (img, img_ts) in enumerate(zip(imgs, img_ts)):
-            img = img[crop[0]:crop[1], crop[2]:crop[3]]
-            if len(img.shape)==2:
-                img = np.stack((img, img, img), axis=2)
-            if num_compress > 0:
-                events_img = events_to_image(xs[0:num_compress], ys[0:num_compress],
-                        np.ones(num_compress), sensor_size=img.shape[0:2])
-                events_img[events_img>0] = 1
-                img[:,:,1]+=events_img[:,:]
-                img = np.clip(img, 0, 1)
-            x, y = np.ogrid[0:img.shape[0], 0:img.shape[1]]
-            event_idx = np.searchsorted(ts, img_ts)
+    if show_frames:
+        if len(imgs) > 0:    # gray scale frame
+            for imgidx, (img, img_ts_) in enumerate(zip(imgs, img_ts)):
+                img = img[crop[0]:crop[1], crop[2]:crop[3]]
+                if len(img.shape)==2:
+                    img = np.stack((img, img, img), axis=2)
+                if num_compress > 0:
+                    events_img = events_to_image(xs[0:num_compress], ys[0:num_compress],
+                            np.ones(num_compress), sensor_size=img.shape[0:2])
+                    events_img[events_img>0] = 1
+                    img[:,:,1]+=events_img[:,:]
+                    img = np.clip(img, 0, 1)
+                x, y = np.ogrid[0:img.shape[0], 0:img.shape[1]]
+                event_idx = np.searchsorted(ts, img_ts_)
+                if event_idx > 0:
+                    ax.scatter(xs[0:event_idx], ts[0:event_idx], ys[0:event_idx], zdir='z',
+                            c=colors[0:event_idx], facecolors=colors[0:event_idx],
+                            s=np.ones(xs.shape)[0:event_idx]*event_size, marker=marker, linewidths=0, alpha=1.0 if show_events else 0)
 
-            ax.scatter(xs[0:event_idx], ts[0:event_idx], ys[0:event_idx], zdir='z',
-                    c=colors[0:event_idx], facecolors=colors[0:event_idx],
-                    s=np.ones(xs.shape)*event_size, marker=marker, linewidths=0, alpha=1.0 if show_events else 0)
+                ax.plot_surface(y, img_ts_, x, rstride=stride, cstride=stride, facecolors=img, alpha=1)
 
-            ax.plot_surface(y, img_ts, x, rstride=stride, cstride=stride, facecolors=img, alpha=1)
+                ax.scatter(xs[event_idx:-1], ts[event_idx:-1], ys[event_idx:-1], zdir='z',
+                        c=colors[event_idx:-1], facecolors=colors[event_idx:-1],
+                        s=np.ones(xs.shape)[event_idx:-1]*event_size, marker=marker, linewidths=0, alpha=1.0 if show_events else 0)
+        else:   # event image
+            print("Drawing event image instead of gray-scale frame")
+            for imgidx, img_ts_ in enumerate(img_ts):
+                img = events_to_image(xs.astype(int), ys.astype(int), ps, sensor_size=img_size,
+                    interpolation=None, padding=False)
+                img = np.abs(img)
+                mn, mx = np.min(img), np.max(img)
+                indx, indy = np.where(img > 0)
 
-            ax.scatter(xs[event_idx:-1], ts[event_idx:-1], ys[event_idx:-1], zdir='z',
-                    c=colors[event_idx:-1], facecolors=colors[event_idx:-1],
-                    s=np.ones(xs.shape)*event_size, marker=marker, linewidths=0, alpha=1.0 if show_events else 0)
+                if len(img.shape)==2:
+                    img = np.stack((img, img, img), axis=2)
+                if num_compress > 0:
+                    events_img = events_to_image(xs[0:num_compress], ys[0:num_compress],
+                            np.ones(num_compress), sensor_size=img.shape[0:2])
+                    events_img[events_img>0] = 1
+                    img[:,:,1]+=events_img[:,:]
+                    img = np.clip(img, 0, 1)
+                x, y = np.ogrid[0:img.shape[0], 0:img.shape[1]]
+                event_idx = np.searchsorted(ts, img_ts_)
+                if event_idx > 0:
+                    ax.scatter(xs[0:event_idx], ts[0:event_idx], ys[0:event_idx], zdir='z',
+                            c=colors[0:event_idx], facecolors=colors[0:event_idx],
+                            s=np.ones(xs.shape)[0:event_idx]*event_size, marker=marker, linewidths=0, alpha=1.0 if show_events else 0)
+
+                # ax.plot_surface(y, img_ts_, x, rstride=stride, cstride=stride, facecolors=img, alpha=1)
+                ax.scatter(indy, np.min(ts[event_idx:-1]), indx, zdir='z',
+                           c='k', s=event_size, marker=marker, linewidths=0)
+
+                ax.scatter(xs[event_idx:-1], ts[event_idx:-1], ys[event_idx:-1], zdir='z',
+                        c=colors[event_idx:-1], facecolors=colors[event_idx:-1],
+                        s=np.ones(xs.shape)[event_idx:-1]*event_size, marker=marker, linewidths=0, alpha=1.0 if show_events else 0)
+
 
     elif num_compress > 0:
         # Plot events
@@ -259,10 +294,15 @@ def plot_events(xs, ys, ts, ps, save_path=None, num_compress='auto', num_show=10
         ax.w_yaxis.line.set_color((1.0, 1.0, 1.0, 0.0))
         ax.w_zaxis.line.set_color((1.0, 1.0, 1.0, 0.0))
         ax.set_frame_on(False)
+
+    ax.set_xlabel('x')
+    ax.set_ylabel('time')
+    ax.set_zlabel('y')
     # Hide xy axes
     ax.set_xticks([])
     ax.set_yticks([])
     ax.set_zticks([])
+
     # Flush axes
     ax.set_xlim3d(0, img_size[1])
     ax.set_ylim3d(ts[0], ts[-1])
@@ -272,7 +312,7 @@ def plot_events(xs, ys, ts, ps, save_path=None, num_compress='auto', num_show=10
         plt.show()
     if save_path is not None:
         ensure_dir(save_path)
-        plt.savefig(save_path, transparent=True, dpi=600, bbox_inches = 'tight')
+        plt.savefig(save_path, transparent=False, dpi=600, bbox_inches = 'tight')
     plt.close()
 
 def plot_between_frames(xs, ys, ts, ps, frames, frame_event_idx, args, plttype='voxel'):
@@ -302,15 +342,25 @@ def plot_between_frames(xs, ys, ts, ps, frames, frame_event_idx, args, plttype='
         img_ts = []
         for f_idx in frame_indices:
             img_ts.append(ts[f_idx[1]])
-        fname = os.path.join(args.output_path, "events_{:09d}.png".format(i))
+        fname_with_frame = os.path.join(args.output_path, "event_with_frame_{:09d}.png".format(i))
+        fname_with_event = os.path.join(args.output_path, "event_{:09d}.png".format(i))
         if plttype == 'voxel':
             plot_voxel_grid(xs[s:e], ys[s:e], ts[s:e], ps[s:e], bins=args.num_bins, crop=args.crop,
                     frames=frame, frame_ts=img_ts, elev=args.elev, azim=args.azim)
         elif plttype == 'events':
-            plot_events(xs[s:e], ys[s:e], ts[s:e], ps[s:e], save_path=fname,
+            plot_events(xs[s:e], ys[s:e], ts[s:e], ps[s:e], save_path=fname_with_event,
+                    num_show=args.num_show, event_size=args.event_size, imgs=[],
+                    img_ts=img_ts, show_events=not args.hide_events, azim=args.azim,
+                    elev=args.elev, show_frames=not args.hide_frames, crop=args.crop,
+                    compress_front=args.compress_front, invert=args.invert,
+                    num_compress=args.num_compress, show_plot=args.show_plot, stride=args.stride,
+                    img_size=frame[0].shape, show_axes=True)
+
+            plot_events(xs[s:e], ys[s:e], ts[s:e], ps[s:e], save_path=fname_with_frame,
                     num_show=args.num_show, event_size=args.event_size, imgs=frame,
                     img_ts=img_ts, show_events=not args.hide_events, azim=args.azim,
                     elev=args.elev, show_frames=not args.hide_frames, crop=args.crop,
                     compress_front=args.compress_front, invert=args.invert,
-                    num_compress=args.num_compress, show_plot=args.show_plot, stride=args.stride)
+                    num_compress=args.num_compress, show_plot=args.show_plot, stride=args.stride,
+                    img_size=frame[0].shape, show_axes=True)
 

@@ -81,6 +81,7 @@ if __name__ == "__main__":
         frame_idx = np.stack((frame_end, frame_start[0:-1]), axis=1)
         ys = frames[0].shape[0]-ys
         xs = frames[0].shape[1]-xs
+        print("Have {} frames".format(len(frames)))
 
     if args.plot_method == 'between_frames':
         if args.renderer == "mayavi":

@@ -1,13 +1,13 @@
 import numpy as np
 import torch
-from event_utils import *
+from ..util.event_util import *
 from abc import ABC, abstractmethod
 
 class warp_function(ABC):
-"""
-Base class for objects that can warp events to a reference time
-via a parametrizeable, differentiable motion model
-"""
+    """
+    Base class for objects that can warp events to a reference time
+    via a parametrizeable, differentiable motion model
+    """
     def __init__(self, name, dims):
         """
         Constructor.
@@ -78,6 +78,6 @@ class pure_rotation_warp(warp_function):
     """
     def __init__(self):
         warp_function.__init__(self, 'pure_rotation_warp', 4)
-{not:timeslice}
+# {not:timeslice}
     def warp(self, xs, ys, ts, ps, t0, params, compute_grad=False):
         pass

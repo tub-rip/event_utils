@@ -3,11 +3,13 @@ import numpy as np
 import scipy
 import scipy.optimize as opt
 from scipy.ndimage.filters import gaussian_filter
+import matplotlib.pyplot as plt
 import torch
 import copy
 from ..util.event_util import infer_resolution, get_events_from_mask
 from ..util.util import plot_image, save_image, plot_image_grid
 from ..visualization.draw_event_stream import plot_events
+from ..data_formats.read_events import read_h5_event_components
 from .objectives import *
 from .warps import *
 
